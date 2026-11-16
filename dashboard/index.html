@@ -25,9 +25,18 @@
       line-height: 1.45;
     }
     header {
-      padding: 2rem 1.5rem 1rem;
+      padding: 2rem 1.5rem 1.25rem;
       border-bottom: 1px solid var(--border);
       background: linear-gradient(180deg, #0a0c18 0%, var(--bg) 100%);
+    }
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
     }
     h1 {
       margin: 0 0 0.35rem;
@@ -35,7 +44,84 @@
       letter-spacing: 0.02em;
     }
     h1 span { color: var(--cyan); }
-    .sub { color: var(--muted); font-size: 0.95rem; }
+    .sub { color: var(--muted); font-size: 0.95rem; margin: 0; }
+    .btn-github {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.65rem 1.1rem;
+      border-radius: 999px;
+      border: 1px solid var(--cyan);
+      background: rgba(0, 240, 255, 0.08);
+      color: var(--cyan);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      transition: background 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-github:hover {
+      background: rgba(0, 240, 255, 0.18);
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.25);
+    }
+    .btn-github svg { width: 16px; height: 16px; fill: currentColor; }
+    .intro-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .intro-grid p {
+      margin: 0 0 0.7rem;
+      color: var(--text);
+      font-size: 0.92rem;
+    }
+    .intro-grid p:last-child { margin-bottom: 0; }
+    .arch-steps {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.55rem;
+    }
+    .arch-steps li {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.65rem;
+      align-items: start;
+      font-size: 0.9rem;
+    }
+    .arch-steps .tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.45rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--cyan);
+      min-width: 4.2rem;
+      text-align: center;
+    }
+    .arch-steps li:nth-child(2) .tag { color: var(--magenta); }
+    .arch-steps li:nth-child(3) .tag { color: var(--lime); }
+    .arch-steps li:nth-child(4) .tag { color: var(--cyan); }
+    .arch-flow {
+      margin-top: 0.85rem;
+      padding: 0.7rem 0.8rem;
+      border-radius: 8px;
+      border: 1px dashed var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-family: ui-monospace, Consolas, monospace;
+      overflow-x: auto;
+    }
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      margin-top: 0.85rem;
+    }
     main {
       max-width: 1100px;
       margin: 0 auto;
@@ -101,10 +187,61 @@
 </head>
 <body>
   <header>
-    <h1>PySpark Batch ETL <span>Framework</span></h1>
-    <p class="sub">Medallion pipeline metrics — bronze / silver / gold trade data · <span id="generated">—</span></p>
+    <div class="header-inner">
+      <div>
+        <h1>PySpark Batch ETL <span>Framework</span></h1>
+        <p class="sub">Medallion pipeline metrics — bronze / silver / gold trade data · <span id="generated">—</span></p>
+      </div>
+      <a class="btn-github" href="https://github.com/Rahul9121/pyspark-batch-etl" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
   </header>
   <main>
+    <div class="intro-grid">
+      <section class="panel">
+        <h2>About this project</h2>
+        <p>
+          A small medallion batch ETL I built for capital-markets style trade data.
+          Synthetic dirty CSVs land in bronze, get cleaned and deduped in silver, then
+          join instrument reference data and business rules in gold.
+        </p>
+        <p>
+          The run also writes partitioned Parquet, executes SQL reconciliation across
+          layers, and records a Spark shuffle / AQE tuning comparison with real timings.
+          This page is the static metrics dashboard published from CI.
+        </p>
+        <div class="cta-row">
+          <a class="btn-github" href="https://github.com/Rahul9121/pyspark-batch-etl" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            Full source and README
+          </a>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Architecture</h2>
+        <ul class="arch-steps">
+          <li>
+            <span class="tag">Bronze</span>
+            <span>Ingest trades CSV as strings, stamp ingest metadata, land raw Parquet.</span>
+          </li>
+          <li>
+            <span class="tag">Silver</span>
+            <span>Normalize side codes, cast types, drop invalid rows, dedupe by trade_id.</span>
+          </li>
+          <li>
+            <span class="tag">Gold</span>
+            <span>Broadcast-join instruments from Postgres (JDBC), apply lot/active rules, write date+venue partitions and aggregates.</span>
+          </li>
+          <li>
+            <span class="tag">Checks</span>
+            <span>Spark SQL reconciliation across layers, plus baseline vs tuned shuffle timings into metrics.json.</span>
+          </li>
+        </ul>
+        <div class="arch-flow">CSV + Postgres → Bronze → Silver → Gold → Reconcile → metrics.json → Pages</div>
+      </section>
+    </div>
     <div class="cards" id="cards"></div>
     <div class="charts">
       <section class="panel"><h2>Layer row counts</h2><canvas id="countsChart"></canvas></section>
