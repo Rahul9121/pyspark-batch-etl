@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PySpark Batch ETL — Metrics</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    :root {
+      --bg: #05060f;
+      --panel: #0c0e1a;
+      --cyan: #00f0ff;
+      --magenta: #ff2bd6;
+      --lime: #b6ff00;
+      --text: #e8ecff;
+      --muted: #8b93b8;
+      --border: #1c2240;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      padding: 2rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #0a0c18 0%, var(--bg) 100%);
+    }
+    h1 {
+      margin: 0 0 0.35rem;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+    }
+    h1 span { color: var(--cyan); }
+    .sub { color: var(--muted); font-size: 0.95rem; }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.25rem 1.25rem 3rem;
+      display: grid;
+      gap: 1rem;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+    .card .label { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .card .value { font-size: 1.6rem; font-weight: 700; margin-top: 0.25rem; color: var(--cyan); }
+    .card.mag .value { color: var(--magenta); }
+    .card.lime .value { color: var(--lime); }
+    section.panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem 1.25rem;
+    }
+    section h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.05rem;
+      color: var(--lime);
+      font-weight: 600;
+    }
+    .charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    canvas { max-height: 260px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.45rem 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--muted); font-weight: 600; }
+    .pass { color: var(--lime); }
+    .fail { color: var(--magenta); }
+    .wrap { overflow-x: auto; }
+    footer {
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 1rem;
+    }
+    a { color: var(--cyan); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PySpark Batch ETL <span>Framework</span></h1>
+    <p class="sub">Medallion pipeline metrics — bronze / silver / gold trade data · <span id="generated">—</span></p>
+  </header>
+  <main>
+    <div class="cards" id="cards"></div>
+    <div class="charts">
+      <section class="panel"><h2>Layer row counts</h2><canvas id="countsChart"></canvas></section>
+      <section class="panel"><h2>Tuning comparison (seconds)</h2><canvas id="tuneChart"></canvas></section>
+    </div>
+    <section class="panel">
+      <h2>Reconciliation checks</h2>
+      <div class="wrap">
+        <table>
+          <thead><tr><th>Check</th><th>Result</th><th>Metric</th><th>Detail</th></tr></thead>
+          <tbody id="reconBody"></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Gold venue summary</h2>
+      <div class="wrap">
+        <table>
+          <thead><tr><th>Venue</th><th>Asset class</th><th>Trades</th><th>Gross notional</th><th>Symbols</th></tr></thead>
+          <tbody id="venueBody"></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Gold daily symbol (sample)</h2>
+      <div class="wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Symbol</th><th>Side</th><th>Trades</th><th>Gross notional</th><th>Avg price</th></tr></thead>
+          <tbody id="dailyBody"></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Stage timings</h2>
+      <div class="wrap">
+        <table>
+          <thead><tr><th>Stage</th><th>Seconds</th></tr></thead>
+          <tbody id="stageBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <footer>
+    Rahul Ega · <a href="https://github.com/Rahul9121/pyspark-batch-etl">github.com/Rahul9121/pyspark-batch-etl</a>
+  </footer>
+  <script>
+    const CYAN = "#00f0ff";
+    const MAG = "#ff2bd6";
+    const LIME = "#b6ff00";
+    Chart.defaults.color = "#8b93b8";
+    Chart.defaults.borderColor = "#1c2240";
+
+    function money(n) {
+      if (n == null) return "—";
+      return Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    }
+
+    async function load() {
+      const res = await fetch("metrics.json?ts=" + Date.now());
+      const m = await res.json();
+      document.getElementById("generated").textContent = m.generated_at || "local run";
+
+      const c = m.counts || {};
+      const cards = [
+        ["Bronze", c.bronze, ""],
+        ["Silver", c.silver, "mag"],
+        ["Gold", c.gold, "lime"],
+        ["Instruments", c.instruments, ""],
+        ["Daily rows", c.daily_symbol_rows, "mag"],
+        ["Venue rows", c.venue_summary_rows, "lime"],
+      ];
+      document.getElementById("cards").innerHTML = cards.map(([label, val, cls]) =>
+        `<div class="card ${cls}"><div class="label">${label}</div><div class="value">${val ?? "—"}</div></div>`
+      ).join("");
+
+      new Chart(document.getElementById("countsChart"), {
+        type: "bar",
+        data: {
+          labels: ["Bronze", "Silver", "Gold"],
+          datasets: [{
+            label: "Rows",
+            data: [c.bronze || 0, c.silver || 0, c.gold || 0],
+            backgroundColor: [CYAN, MAG, LIME],
+          }],
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+      });
+
+      const tuning = m.tuning || [];
+      new Chart(document.getElementById("tuneChart"), {
+        type: "bar",
+        data: {
+          labels: tuning.map(t => t.label),
+          datasets: [{
+            label: "Seconds",
+            data: tuning.map(t => t.seconds),
+            backgroundColor: [MAG, CYAN],
+          }],
+        },
+        options: {
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                afterBody: (items) => {
+                  const t = tuning[items[0].dataIndex];
+                  return [`shuffle=${t.shuffle_partitions}`, `aqe=${t.aqe}`];
+                }
+              }
+            }
+          },
+          scales: { y: { beginAtZero: true, title: { display: true, text: "seconds" } } },
+        },
+      });
+
+      document.getElementById("reconBody").innerHTML = (m.reconciliation || []).map(r =>
+        `<tr>
+          <td>${r.name}</td>
+          <td class="${r.passed ? "pass" : "fail"}">${r.passed ? "PASS" : "FAIL"}</td>
+          <td>${r.metric}</td>
+          <td>${r.detail || r.expected || ""}</td>
+        </tr>`
+      ).join("");
+
+      document.getElementById("venueBody").innerHTML = (m.gold_venue_summary || []).slice(0, 20).map(r =>
+        `<tr>
+          <td>${r.venue}</td><td>${r.asset_class}</td><td>${r.trade_count}</td>
+          <td>${money(r.gross_notional)}</td><td>${r.symbol_count}</td>
+        </tr>`
+      ).join("");
+
+      document.getElementById("dailyBody").innerHTML = (m.gold_daily_symbol || []).slice(0, 25).map(r =>
+        `<tr>
+          <td>${r.trade_date}</td><td>${r.symbol}</td><td>${r.side}</td>
+          <td>${r.trade_count}</td><td>${money(r.gross_notional)}</td><td>${r.avg_price}</td>
+        </tr>`
+      ).join("");
+
+      const st = m.stage_timings_sec || {};
+      document.getElementById("stageBody").innerHTML = Object.entries(st).map(([k, v]) =>
+        `<tr><td>${k}</td><td>${v}</td></tr>`
+      ).join("");
+    }
+    load().catch(err => {
+      document.getElementById("generated").textContent = "metrics.json missing — run the pipeline first";
+      console.error(err);
+    });
+  </script>
+</body>
+</html>
