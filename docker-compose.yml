@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: marketdata
+      POSTGRES_USER: etl
+      POSTGRES_PASSWORD: etlpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U etl -d marketdata"]
+      interval: 3s
+      timeout: 5s
+      retries: 20

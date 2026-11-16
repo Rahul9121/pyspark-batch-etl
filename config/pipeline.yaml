@@ -1,0 +1,28 @@
+seed: 42
+trade_rows: 8000
+duplicate_rate: 0.04
+null_rate: 0.03
+bad_type_rate: 0.02
+late_record_rate: 0.05
+output_root: data/output
+raw_csv: data/raw/trades.csv
+instruments_csv: data/ref/instruments.csv
+postgres:
+  host: localhost
+  port: 5432
+  database: marketdata
+  user: etl
+  password: etlpass
+  table: instruments
+  jdbc_url: jdbc:postgresql://localhost:5432/marketdata
+partition_cols:
+  - trade_date
+  - venue
+broadcast_threshold_mb: 10
+tuning:
+  baseline:
+    shuffle_partitions: 200
+    aqe: false
+  tuned:
+    shuffle_partitions: 8
+    aqe: true
